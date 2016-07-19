@@ -8,7 +8,7 @@
 
 clear all
 set classlib to
-l='C:\xsoftsr'
+l='j:\xsoftsr'
 *l='X:'
 set talk off
 lldesarrollo=(_vfp.startmode()#4)
