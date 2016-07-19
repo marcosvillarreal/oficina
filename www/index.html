@@ -1,0 +1,772 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>Preventa Mobile</title>
+    <!-- #region Includes-->
+    <link rel="stylesheet" href="Content/jquery.mobile-1.3.2.css" />
+    <link rel="stylesheet" href="Content/site.css" />
+    <!-- Frameworks -->
+    <script type="text/javascript" src="Scripts/jquery-1.10.2.js"></script>
+    <script type="text/javascript" src="Scripts/jsrender.min.js"></script>
+    <script type="text/javascript" src="Scripts/jquery.mobile-1.3.2.js"></script>
+    <script type="text/javascript" src="Scripts/jquery.base64.js"></script>
+    <script type="text/javascript" src="Scripts/json.hpack.min.js"></script>
+    <!-- https://github.com/RobinHerbots/jquery.inputmask -->
+    <script type="text/javascript" src="Scripts/jquery.inputmask.bundle.min.js"></script>
+    <script type="text/javascript" src="Scripts/moment.min.js"></script>
+    <script type="text/javascript" src="Scripts/fastclick.min.js"></script>
+    <script type="text/javascript" src="cordova.js"></script>
+    <!-- Scripts de la aplicacion -->
+    <script type="text/javascript" src="Scripts/_index.js"></script>
+    <script type="text/javascript" src="Scripts/_cliente.js"></script>
+    <script type="text/javascript" src="Scripts/_noventa.js"></script>
+    <script type="text/javascript" src="Scripts/_util.js"></script>
+    <script type="text/javascript" src="Scripts/_dal.js"></script>
+    <script type="text/javascript" src="Scripts/_configuration.js"></script>
+    <script type="text/javascript" src="Scripts/_sync.js"></script>
+    <script type="text/javascript" src="Scripts/_listapedidos.js"></script>
+    <script type="text/javascript" src="Scripts/_listaarticulospedido.js"></script>
+    <script type="text/javascript" src="Scripts/_altalineapedido.js"></script>
+    <script type="text/javascript" src="Scripts/_editalineapedido.js"></script>
+    <script type="text/javascript" src="Scripts/_precios.js"></script>
+    <script type="text/javascript" src="Scripts/_editalineavariedades.js"></script>
+    <script type="text/javascript" src="Scripts/_parametros.js"></script>
+    <script type="text/javascript" src="Scripts/_gridcargarapidaarticulo.js"></script>
+    <!--#endregion-->
+    <!--#region Templates-->
+    <!-- #region Templates Clientes -->
+    <script id="clienteDetalleHeaderTmpl" type="text/x-jsrender">
+        <div data-role='navbar'>
+            <ul>
+                <li><a href='#homePage' data-icon='home' data-iconpos='notext'>Inicio</a></li>
+                <li><a href='#clientesPage' data-icon='back'>Atrás</a></li>
+                <li><a href='#noventaPage' data-icon='alert'>No Venta</a></li>
+                <li><a href='#' data-icon='grid' onclick='preventamobile.ui.cliente().linkDestino()'>Pedidos</a></li>
+            </ul>
+        </div>
+    </script>
+    <script id="clienteDetalleTmpl" type="text/x-jsrender">
+        <div data-role='fieldcontain'>Razón Social: {{:numero}} - {{:nombre}}</div>
+        <div data-role='fieldcontain'>Dirección: {{:direccion}}</div>
+        <div data-role='fieldcontain'>Teléfono: {{:telefono}}</div>
+        <div data-role='fieldcontain'>Localidad: {{:localidad}}</div>
+        <div data-role='fieldcontain'>Cuit: {{:cuit}}</div>
+        <div data-role='fieldcontain'>Iva: {{:situacionivaDescripcion}}</div>
+        <div id="pedidoAnteriorCliente"></div>
+    </script>
+    <script id="pedidoAnteriorTmpl" type="text/x-jsrender">
+        <br />
+        <div class="ui-corner-all custom-corners">
+            <div class="ui-bar ui-bar-a">
+                <h3>Fecha: {{:fecha}}</h3>
+            </div>
+            <div class="ui-body ui-body-a">
+                <div data-role='fieldcontain'>Tipo de Pedido: {{:tipoDePedido}}</div>
+                <div data-role='fieldcontain'>Observacion: {{:observacion}}</div>
+                <div data-role='fieldcontain'>Remito: {{:remito}}</div>
+                <div data-role='fieldcontain'>Vales: {{:vales}}</div>
+                <div data-role='fieldcontain'>Fecha Entrega: {{:entrega}}</div>
+                <div data-role='fieldcontain'>Total: {{:total}}</div>
+                {{if lineas && lineas.length>0}}
+                <div>
+                    <ul data-role="listview">
+                        {{for lineas}}
+                        <li>{{:resumen}}</li>
+                        {{/for}}
+                    </ul>
+                </div>
+                {{/if}}
+            </div>
+        </div>
+        <br />
+        <br />
+
+    </script>
+    <script id="clienteListaTmpl" type="text/x-jsrender">
+        <ul data-theme='a' data-role='listview' data-inset='true' data-autodividers='false' data-filter='true' data-filter-placeholder='Ingrese letras a buscar'>
+            {{for clientes}}
+            <li data-theme='{{if tienePedido}}b{{else}}{{if noVenta}}e{{else}}a{{/if}}{{/if}}' id="lcli{{:numero.trim()}}">
+                <a href='#' onclick='preventamobile.ui.cliente().detallesCliente("{{:numero}}");'>
+                    <br>{{:nombre}} ({{:numero.trim()}})
+                    {{if sincronizar}}
+                    <span id="sincronizar{{:numero}}" class="ui-li-count">S</span>
+                    {{/if}}
+                </a>
+                <br>
+            </li>
+            {{/for}}
+        </ul>
+    </script>
+    <script id="clienteFueraRutaListaTmpl" type="text/x-jsrender">
+        <ul data-theme='a' data-role='listview' data-inset='true' data-autodividers='false' data-filter='true' data-filter-placeholder='Ingrese letras a buscar'>
+            {{for clientes}}
+            <li data-theme='{{if noVenta || tienePedido}}e{{else}}a{{/if}}'>
+                <a href='#' onclick='preventamobile.ui.cliente().agregarCliente("{{:numero}}");'>({{:numero.trim()}}) {{:nombre}}</a>
+            </li>
+            {{/for}}
+        </ul>
+    </script>
+    <!-- #endregion -->
+    <!-- #region Templates Precios -->
+    <script id="precioListaTmpl2" type="text/x-jsrender">
+        <div data-role='collapsible-set'>
+            {{for secciones}}
+            <div id='divprecios2' data-role='collapsible' style='white-space:normal' data-filter='true' data-filter-placeholder='Ingrese letras a buscar'>
+                <h1 style='white-space:normal'>
+                    <!-- //TODO: aplicar el toProperCase() al nombre -->
+                    {{:nombre}} ({{:id}})
+                    <br />
+                </h1>
+                <ul id='seccion{{:id}}' data-theme='a' data-role='listview' data-inset='true' data-autodividers='false' data-filter='true' data-filter-placeholder='Ingrese letras a buscar'>
+                    {{for articulosSeccion}}
+                    <li style='white-space:normal'>
+                        <a class='lineapre' style='white-space:normal' href='#' onclick='preventamobile.ui.precios().detallesprecios("{{:numero}}");'>
+                            {{:numero}} - {{:nombre}}
+                            <span c lass='ui-li-count'>$ {{:preventa1}}</span>
+                        </a>
+                    </li>
+                    {{/for}}
+                </ul>
+            </div>
+            {{/for}}
+        </div>
+    </script>
+    <script id="precioListaTmpl" type="text/x-jsrender">
+        <div data-role='collapsible-set'>
+            {{for secciones}}
+            <div id='divprecios' data-role='collapsible' style='white-space:normal' data-filter='true' data-filter-placeholder='Ingrese letras a buscar'>
+                <h1 style='white-space:normal' onclick='preventamobile.ui.precios().articulosPorSeccion("{{:id}}");'>
+                    <!-- //TODO: aplicar el toProperCase() al nombre -->
+                    {{:nombre}} ({{:numero}})
+                    <br />
+                </h1>
+                <ul id='seccion{{:id}}' data-theme='a' data-role='listview' data-inset='true' data-autodividers='false'>
+                    {{for articulosSeccion}}
+                    <li style='white-space:normal'>
+                        <a class='lineapre' style='white-space:normal' href='#' onclick='preventamobile.ui.precios().detallesprecios("{{:numero}}");'>
+                            {{:numero}} - {{:nombre}}
+                            <span c lass='ui-li-count'>$ {{:preventa1}}</span>
+                        </a>
+                    </li>
+                    {{/for}}
+                </ul>
+            </div>
+            {{/for}}
+        </div>
+
+    </script>
+    <script id="precioArticuloTmpl" type="text/x-jsrender">
+        <ul id='Ul2' data-theme='a' data-role='listview' data-inset='true' data-autodividers='false' data-filter='true' data-filter-placeholder='Ingrese letras a buscar'>
+            {{for articulosSeccion}}
+            <li style='white-space:normal'>
+                <a class='lineapre' style='white-space:normal' href='#' onclick='preventamobile.ui.precios().detallesprecios("{{:numero}}");'>
+                    {{:numero}} - {{:nombre}}
+                    <span c lass='ui-li-count'>$ {{:preventa1}}</span>
+                </a>
+            </li>
+            {{/for}}
+        </ul>
+    </script>
+
+    <script id="precioDetalleTmpl" type="text/x-jsrender">
+        <div data-role='fieldcontain'>Articulo: {{:numero}} - {{:nombre}}</div>
+        <div data-role='fieldcontain'>Bultos x: {{:unibulto}}</div>
+        <div data-role='fieldcontain'>
+            Presentación:
+            {{if univenta==="0"}}
+            Bulto
+            {{else}}
+            Unidad
+            {{/if}}
+        </div>
+        {{if variedades && variedades.length > 0 }}
+        <div data-role='collapsible' data-collapsed="false">
+            <h3>Variedades</h3>
+            <ul id='listasab' data-theme='a' data-role='listview' data-inset='true' data-autodividers='false' data-filter='true' data-filter-placeholder='Ingrese valor a buscar'>
+                {{for variedades}}
+                <li style='white-space:normal'>{{:codigo}} - {{:detalle}}</li>
+                {{/for}}
+            </ul>
+        </div>
+        {{/if}}
+    </script>
+    <!-- #endregion -->
+    <!-- #region Templates Pedidos -->
+    <script id="headerEditaPedidosTmpl" type="text/x-jsrender">
+        <div data-role='navbar'>
+            <ul>
+                <li><a href='#clientesPage' data-icon='back' data-iconpos='notext'>Atrás</a></li>
+                <li><a href='#' data-icon='edit' onclick='preventamobile.ui.listaPedidos().aplicarPedido(3);'>Sync</a></li>
+                {{if indice}}
+                <li><a href='#' data-icon='delete' onclick='preventamobile.ui.listaPedidos().borrarPedido("{{:indice}}");'>Borrar</a></li>
+                {{/if}}
+                <li><a href='#' data-icon='check' onclick='preventamobile.ui.listaPedidos().aplicarPedido(1);'>Guardar</a></li>
+                <li><a href='#' data-icon='grid' onclick='preventamobile.ui.listaPedidos().aplicarPedido(0);'>Artículos</a></li>
+                <!--<li><a href='#' data-icon='grid'   onclick='preventamobile.ui.listaPedidos().aplicarPedido(2);' >Carga Rápida</a></li> -->
+            </ul>
+        </div>
+    </script>
+    <script id="editaPedidoContentTmpl" type="text/x-jsrender">
+        <div data-role='fieldcontain'><label for='textObserva'>Observacion:</label><textarea cols='40' rows='3' name='textObserva' id='textObserva'>{{:observaciones}}</textarea></div>
+        <fieldset data-role='controlgroup' data-type='horizontal'>
+            <legend>Tipo de Pedido</legend>
+            <input type='radio' name='radio-choice-1' id='radio-choice-1' value='1' {{if tipoDePedido == 1}} checked="checked" {{/if}} data-type='horizontal' data-inline='true' />
+            <label for='radio-choice-1'>Normal</label>
+            <input type='radio' name='radio-choice-1' id='radio-choice-2' value='2' {{if tipoDePedido == 2}} checked="checked" {{/if}} data-type='horizontal' data-inline='true' />
+            <label for='radio-choice-2'>Diferido</label>
+        </fieldset>
+        <div data-role='fieldcontain' class='ui-hidden-accessible'><label id='pedidoId'>{{:pedidoId}}</label>  </div>
+        <div data-role='fieldcontain'><label>Fecha: {{:fecha}} - {{:horaIn}}</label></div>
+        <fieldset data-role='controlgroup' data-type='horizontal'>
+            <legend>Remito</legend>
+            <input type='radio' name='radio-remito' id='radio-remito-1' value='0' {{if remito == 0}} checked="checked" {{/if}} data-type='horizontal' data-inline='true' />
+            <label for='radio-remito-1'>Normal</label>
+            <input type='radio' name='radio-remito' id='radio-remito-2' value='1' {{if remito == 1}} checked="checked" {{/if}} data-type='horizontal' data-inline='true' />
+            <label for='radio-remito-2'>Remito</label>
+            <input type='radio' name='radio-remito' id='radio-remito-3' value='2' {{if remito == 2}} checked="checked" {{/if}} data-type='horizontal' data-inline='true' />
+            <label for='radio-remito-3'>Cons. Final</label>
+        </fieldset>
+        <div data-role='fieldcontain'>
+            <label for='sliderVales'>Vales:</label>
+            <select name='sliderVales' id='sliderVales' data-role='slider'>
+                <option value='off'>No</option>
+                <option value='on' {{if vales == 1}} selected="selected" {{/if}}>Si</option>
+            </select>
+        </div>
+        <div data-role='fieldcontain'><label for='date2'>Fecha Entrega:</label><input type='date' name='date2' id='date2' value='{{:~toDate(fechaEntrega)}}' /></div>
+        <div data-role='fieldcontain'><label for='total'>Total:</label><input type="text" readonly="readonly" value='$ {{:total}}' name='total' id='total' /></div>
+    </script>
+    <script id="headerEditaLineaPedidoTmpl" type="text/x-jsrender">
+        <div data-role='navbar'>
+            <ul>
+                <li><a href='#homePage' data-icon='home' data-iconpos='notext'>Inicio</a></li>
+                <li><a href='#listaArticulosPedidoPage' data-icon='back'>Atrás</a></li>
+                <li><a href='#' data-icon='delete' onclick='preventamobile.ui.editaLineaPedido().borrarLinea("{{:lineaId}}")'>Borrar</a></li>
+                <li><a href='#' data-icon='check' onclick='preventamobile.ui.editaLineaPedido().guardarLinea(true)'>Guardar</a></li>
+            </ul>
+        </div>
+    </script>
+    <script id="editaLineaPedidoContentTmpl" type="text/x-jsrender">
+        <div class='ui-hidden-accessible'>
+            <label id='lineaIdpedido'>{{:linea.lineaId}}</label>
+        </div>
+        <div>
+            <label>Artículo: {{:articulo.numero}} - {{:articulo.nombre}}</label>
+        </div>
+        <div data-role='fieldcontain'>
+            <label for='editaLineaCantidad'>Cantidad</label>
+            <input type='number' name='editaLineaCantidad' id='editaLineaCantidad' value='{{:linea.cantidad}}' />
+        </div>
+        <div data-role='fieldcontain'>
+            <label for='editaLineaBonif1'>Bonificaci&oacuten</label>
+            <input type='number' name='editaLineaBonif1' id='editaLineaBonif1' value='{{:linea.bonif1}}' />
+        </div>
+        <div data-role='fieldcontain'>
+            <label for='editaLineaUnibulto'>Bultos X</label>
+            <input type='number' name='editaLineaUnibulto' readonly='readonly' id='editaLineaUnibulto' value='{{:linea.unibulto}}' />
+        </div>
+        <!-- //TODO: asignar valor segun el model -->
+        <div data-role='fieldcontain'>
+            <label for='editaLineaSliderUniVenta'>Venta X</label>
+            <select name='editaLineaSliderUniVenta' id='editaLineaSliderUniVenta' data-role='slider'>
+                <option value='off'>Unidad</option>
+                <option value='on' {{if linea.univenta == 1}} selected="selected" {{/if}}>Bulto</option>
+            </select>
+        </div>
+        <div data-role='fieldcontain'>
+            <label for='editaLineaSliderCambioVenta'>Venta / Cambio</label>
+            <select id="editaLineaSliderCambioVenta" name="sliderVenta" data-role="slider">
+                <option value='off'>Venta</option>
+                <option value='on' {{if linea.cantidad < 0}} selected="selected" {{/if}}>Cambio</option>
+            </select>
+        </div>
+    </script>
+    <!-- #endregion -->
+    <!--#endregion-->
+</head>
+<body>
+    <!--#region Menu-->
+    <!-- Pagina Inicial -->
+    <div data-theme="a" data-role="page" data-title="Preventa Mobile" id="homePage">
+        <div data-theme="a" data-role="header">
+            <!-- major.minor.build -->
+            <p id="apptitle" style="font-size: small;text-align:center;"></p>            
+        </div>        
+        <div data-theme="a" data-role="content">
+            <p id="homePageVendedor">Vendedor:</p>
+            <ul data-theme="a" data-role="listview" data-inset="true" data-split-icon='gear'>
+                <li style='white-space: normal'>
+                    <a href="#clientesPage" style='white-space: normal'>
+                        <img src="Content/images/usuario-icono-8221-48.png" style="height: 128px; width: 128px"
+                             alt="Cliente" />
+                        <h3>Clientes</h3>
+                        <p>
+                            Ruta de clientes
+                        </p>
+                    </a>
+                </li>
+                <li id="linkprecios" style='white-space: normal'>
+                    <a onclick="preventamobile.util().abrirPaginaPrecios();" style='white-space: normal'>
+                        <img src="Content/images/moneda-icono-5184-128.png" alt="Precios" />
+                        <h3>Precios</h3>
+                        <p>
+                            Lista de Precios
+                        </p>
+                    </a>
+                </li>
+                <li style='white-space: normal'>
+                    <a href="#opcionesPage" style='white-space: normal'>
+                        <img src="Content/images/opciones.png" alt="Opciones" />
+                        <h3>Opciones</h3>
+                        <p>
+                            Menú de opciones
+                        </p>
+                    </a>
+                </li>
+                <li style='white-space: normal'>
+                    <a href="#opcionesSyncPage" style='white-space: normal'>
+                        <img src="Content/images/sincronizacion-icono-4348-128.png" alt="Sync" />
+                        <h3>Sync</h3>
+                        <p>
+                            Enviar/Recibir datos
+                        </p>
+                    </a>
+                </li>
+                <li style='white-space: normal'>
+                    <a onclick="preventamobile.util().exitFromApp();" href="#" style='white-space: normal'>
+                        <img style="height: 128px; width: 128px" src="Content/images/cerrar.png" alt="Salir" />
+                        <h3>Salir</h3>
+                        <p>
+                            Cerrar aplicación
+                        </p>
+                    </a>
+                </li>
+            </ul>
+            <p>Versión 3.0.0.1</p>
+        </div>
+    </div>
+    <!--#endregion-->
+    <!--#region Pedidos-->
+    <!-- Pagina Info Pedidos -->
+    <div data-theme="a" data-role="page" id="infoPedidosPage" data-title="Info Pedidos">
+        <div data-theme="a" data-role="header" id="headrInfoPedido">
+            <h1>Info Pedidos</h1>
+            <a href="#homePage" data-icon="home">Inicio</a>
+        </div>
+        <div data-theme="a" data-role="content" id="InfoPedidosContent">
+            <p>
+                Información de Pedidos
+            </p>
+            <div data-role='fieldcontain'>
+                <b>Total Clientes :</b><a id='A0' href='#'></a>
+            </div>
+            <div data-role='fieldcontain'>
+                <b>Total Ventas :</b><a id='A1' href='#'></a>
+            </div>
+            <div data-role='fieldcontain'>
+                <b>Total No Ventas :</b><a id='A2' href='#'></a>
+            </div>
+            <div data-role='fieldcontain'>
+                <b>Total No Visitados :</b><a id='A3' href='#'></a>
+            </div>
+            <div data-role='fieldcontain'>
+                <b>$ Total Pedidos :</b><a id='A4' href='#'></a>
+            </div>
+            <div data-role='fieldcontain'>
+                <b>$ Promedio Pedido :</b><a id='A5' href='#'></a>
+            </div>
+            <a data-role='button' href="#homePage" data-inline='true' data-icon='home'>Inicio</a>
+            <a data-role='button' href="#opcionesPage" data-inline='true' data-icon='back'>Atrás</a>
+        </div>
+    </div>
+    <!-- Pagina Alta linea Pedidos V2 -->
+    <div data-theme="a" data-role="page" id="altaLineaPedidoPage" data-title="Carga Linea">
+        <div data-theme="a" data-role="header" id="headerCargaRapida">
+            <div data-role='navbar'>
+                <ul>
+                    <li><a href='#homePage' data-icon='home' data-iconpos='notext'>Inicio</a></li>
+                    <li><a id="BacklistaArticulosPedidoPage" href='#listaArticulosPedidoPage' data-icon='back'>Atras</a></li>
+                </ul>
+            </div>
+        </div>
+        <div data-role="content">
+            <h2 id="altaTotalPedido"></h2>
+            <input type="number" id="artbus" value="" placeholder="Digite c&oacute;digo ..." style="font-size: x-large;" />
+            <input type="search" id="artbus2" value="" placeholder="Digite c&oacute;digo o letras ..." style="font-size: x-large;" />
+            <div class="ui-grid-a">
+                <div class="ui-block-a"><button id="buscarButton">Buscar</button></div>
+                <div class="ui-block-b">
+                    <select id="sliderVenta" name="sliderVenta" data-role="slider">
+                        <option value='off'>Venta</option>
+                        <option value='on'>Cambio</option>
+                    </select>
+                </div>
+            </div>
+            <ul id="resultados" data-role="listview" data-inset="true"></ul>
+        </div>
+    </div>
+    <div data-theme="a" data-role="page" id="confirmaAltaLineaPedidoPage" data-title="Confirma Carga Linea">
+        <div data-theme="a" data-role="header" id="headerConfirmaCargaLinea">
+            <div data-role='navbar'>
+                <ul>
+                    <li><a href='#homePage' data-icon='home' data-iconpos='notext'>Inicio</a></li>
+                    <li><a href='#altaLineaPedidoPage' data-icon='back'>Atras</a></li>
+                </ul>
+            </div>
+        </div>
+        <div data-theme="a" data-role="content" id="confirmaAltaLineaPedidoContent">
+            <div>
+                <label>Articulo</label>
+                <input type='text' disabled='disabled' readonly='readonly' data-theme='b' name='articulo' id='articulo' value='' style="font-size: x-large;" />
+                <input type="hidden" id="articuloUnidadesPorBulto" />
+            </div>
+            <div class="ui-grid-a">
+                <div class="ui-block-a">
+                    <label>Cantidad</label>
+                    <input type='number' data-theme='b' name='cantidad' id='cantidad' value='' style="font-size: x-large;" onchange="preventamobile.ui.editaLineaPedido().recalcularLineaEnEdicion();" />
+                </div>
+                <div class="ui-block-b">
+                    <select name='sliderUniventa' id='sliderUniVenta' data-role='slider' onchange="preventamobile.ui.editaLineaPedido().recalcularLineaEnEdicion();">
+                        <option value='off'>Unidades</option>
+                        <option value='on'>Bultos</option>
+                    </select>
+                </div>
+            </div>
+            <fieldset class="ui-grid-a">
+                <div class="ui-block-a"><a id="confirmaAltaLineaPedidoOk" href="#" data-role="button">Guardar</a></div>
+                <div class="ui-block-b"><a id="confirmaAltaLineaPedidoCancel" href="#" data-role="button">Cancelar</a></div>
+            </fieldset>
+            <div>
+                <label>Total</label>
+                <input type='text' disabled='disabled' readonly='readonly' data-theme='b' name='totalLinea' id='totalLinea' value='' style="font-size: x-large;" />
+            </div>
+            <div>
+                <label>Precio Unitario</label>
+                <input type='text' disabled='disabled' readonly='readonly' data-theme='b' name='articuloPrecioUnitario' id='articuloPrecioUnitario' value='' style="font-size: x-large;" />
+            </div>
+            <div>
+                <label>Bonificacion</label>
+                <input type='number' data-theme='b' name='bonif1' id='bonif1' value='' style="font-size: x-large" onchange="preventamobile.ui.editaLineaPedido().recalcularLineaEnEdicion();" />
+            </div>
+            <div>
+                <label>Precio Bonificado</label>
+                <input type='text' disabled='disabled' readonly='readonly' data-theme='b' name='articuloPrecioBonificado' id='articuloPrecioBonificado' value='' style="font-size: x-large;" />
+            </div>
+        </div>
+    </div>
+    <!-- Pagina Editar linea Pedidos -->
+    <div data-theme="a" data-role="page" id="editaLineaPedidoPage" data-title="Edita Linea">
+        <div data-theme="a" data-role="header" id="headerEditaLineaPedido">
+        </div>
+        <div data-theme="a" data-role="content" id="editaLineaPedidoContent">
+        </div>
+    </div>
+    <!-- Pagina Editar linea Variedad -->
+    <div data-theme="a" data-role="page" id="editaLineaVariedadesPage" data-title="Variedades">
+        <div data-theme="a" data-role="header" id="headerEditaLineaVariedad">
+            <a href="#homePage" data-icon="home">Inicio</a>
+        </div>
+        <div data-theme="a" data-role="content" id="editaLineaVariedadesContent">
+        </div>
+    </div>
+    <!-- Pagina Editar Borrar Pedidos -->
+    <div data-theme="a" data-role="page" id="editaPedidosPage" data-title="Edita Pedidos">
+        <div data-theme="a" data-role="header" id="headerEditaPedidos">
+        </div>
+        <div data-theme="a" data-role="content" id="editaPedidosContent">
+        </div>
+    </div>
+    <!-- Pagina Carga Rapida -->
+    <div data-theme="a" data-role="page" id="gridCargaRapidaArticuloPage" data-title="Carga Pedido" data-dom-cache="true">
+        <div data-theme="a" data-role="header" id="Div1">
+            <div data-role='navbar'>
+                <ul>
+                    <li><a href='#homePage' data-icon='home' data-iconpos='notext'>Inicio</a></li>
+                    <li><a href='#editaPedidosPage' data-icon='back'>Atras</a></li>
+                    <li><a href='#' data-icon='check' onclick='preventamobile.ui.gridCargaRapidaArticulo().guardarListaRapida()'>Guardar</a></li>
+                    <li><a href='#' data-icon='grid' onclick='preventamobile.ui.cliente().linkDestino()'>Pedidos</a></li>
+                </ul>
+            </div>
+        </div>
+        <div data-theme="a" data-role="content" id="cargaRapidaContent">
+        </div>
+    </div>
+    <!-- Pagina Lista articulos en un Pedido -->
+    <div data-theme="a" data-role="page" id="listaArticulosPedidoPage" data-title="Articulos">
+        <div data-theme="a" data-role="header" id="headerlistaArticulosPedido">
+            <div data-role='navbar'>
+                <ul id='listapednav'>
+                    <li><a href='#homePage' data-icon='home' data-iconpos='notext'>Inicio</a></li>
+                    <li><a href='#editaPedidosPage' data-icon='back'>Atrás</a></li>
+                    <li><a href='#' data-icon='plus' onclick='preventamobile.ui.editaLineaPedido().lineaNueva()'>Nuevo</a></li>
+                </ul>
+            </div>
+        </div>
+        <div data-theme="a" data-role="content" id="listaArticulosPedidoContent">
+        </div>
+    </div>
+    <!-- Pagina Lista Pedidos -->
+    <div data-theme="a" data-role="page" id="listaPedidosPage" data-title="Lista Pedidos">
+        <div data-theme="a" data-role="header" id="headerlistaPedidos">
+        </div>
+        <div data-theme="a" data-role="content" id="listaPedidosContent">
+        </div>
+    </div>
+    <!-- Pagina Motivos de Noventa -->
+    <div data-theme="a" data-role="page" id="noventaPage" data-title="No Venta">
+        <div data-theme="a" data-role="header" id="headernoVenta">
+            <h1>Motivo No Venta</h1>
+            <a href="#homePage" data-icon="home">Inicio</a>
+        </div>
+        <div data-theme="a" data-role="content" id="noVentaContent">
+        </div>
+    </div>
+    <!--#endregion-->
+    <!--#region Clientes-->
+    <!-- Pagina Detalle de Clientes -->
+    <div data-theme="a" data-role="page" id="clientesDetallePage" data-title="Datos Cliente">
+        <div data-theme="a" data-role="header" id="headerclientesDetalle">
+        </div>
+        <div data-theme="a" data-role="content" id="detalleclientesContent">
+        </div>
+    </div>
+    <!-- Pagina Clientes -->
+    <div data-theme="a" data-role="page" id="clientesPage" data-title="Clientes">
+        <div data-theme="a" data-role="header">
+            <h1>Ruta</h1>
+            <a href="#homePage" data-icon="home">Inicio</a>
+            <a href="#clientesFueraRutaPage" data-icon="add">Fuera de Ruta</a>
+        </div>
+        <div data-theme="a" data-role="content" id="clientesContent">
+        </div>
+    </div>
+    <!-- Pagina Clientes Fuera Ruta -->
+    <div data-theme="a" data-role="page" id="clientesFueraRutaPage" data-title="Clientes Fuera de Ruta">
+        <div data-theme="a" data-role="header">
+            <h1>Seleccionar Cliente Fuera de Ruta</h1>
+            <a href="#homePage" data-icon="home">Inicio</a>
+        </div>
+        <div data-theme="a" data-role="content" id="clientesFueraRutaContent">
+        </div>
+    </div>
+    <!--#endregion-->
+    <!--#region Articulos -->
+    <!-- Pagina Precios Detalle -->
+    <div data-theme="a" data-role="page" id="preciosDetallePage" data-title="Precios">
+        <div data-theme="a" data-role="header" id="preciosDetalleHeader">
+            <div data-role='navbar'>
+                <ul>
+                    <li><a href='#homePage' data-icon='home' data-iconpos='notext'>Inicio</a></li>
+                    <li><a href='#preciosPage' data-icon='back'>Atrás</a></li>
+                </ul>
+            </div>
+        </div>
+        <div data-theme="a" data-role="content" id="preciosDetalleContent">
+        </div>
+    </div>
+    <!-- Pagina Precios -->
+    <div data-theme="a" data-role="page" id="preciosPage" data-title="Precios">
+        <div data-theme="a" data-role="header" id="headerPrecios">
+            <h1>Precios</h1>
+            <a href="#homePage" data-icon="home">Inicio</a>
+        </div>
+        <div data-theme="a" data-role="content" id="preciosContent">
+        </div>
+    </div>
+    <!-- Pagina Secciones -->
+    <div data-theme="a" data-role="page" id="seccionesPage" data-title="Secciones">
+        <div data-theme="a" data-role="header" id="headerSecciones">
+            <h1>Secciones</h1>
+            <a href="#homePage" data-icon="home">Inicio</a>
+        </div>
+        <div data-theme="a" data-role="content" id="SeccionesContent">
+        </div>
+    </div>
+    <!--#endregion-->
+    <!--#region Sync-->
+    <!-- Pagina log -->
+    <div data-theme="a" data-role="page" id="logPage" data-title="Log">
+        <div data-theme="a" data-role="header">
+            <div data-role='navbar'>
+                <ul>
+                    <li><a href="#homePage" data-icon="home">Inicio</a></li>
+                    <li><a href="#homePage" data-icon="delete" onclick="preventamobile.dal().clearData();">Limpiar</a></li>
+                </ul>
+            </div>
+        </div>
+        <div data-theme="a" data-role="content" id="logContent">
+        </div>
+    </div>
+    <!-- Pagina Sync -->
+    <div data-theme="a" data-role="page" id="syncPage" data-title="Sync">
+        <div data-theme="a" data-role="header">
+            <h1>Sync</h1>
+            <a href="#homePage" data-icon="home">Inicio</a>
+            <a href="#" onclick="preventamobile.ui.sync().ingresarLog();" data-icon="info">Log</a>
+        </div>
+        <div data-theme="a" data-role="content">
+            <div id="divDia" data-theme="a" data-role="fieldcontain">
+                <label for="diaSelect">
+                    Dia
+                </label>
+                <select id="diaSelect" name="diaSelect" data-theme="a" data-icon="arrow-d" data-native-menu="false">
+                    <option value="1">Domingo</option>
+                    <option value="2">Lunes</option>
+                    <option value="3">Martes</option>
+                    <option value="4">Mi&eacute;rcoles</option>
+                    <option value="5">Jueves</option>
+                    <option value="6">Viernes</option>
+                    <option value="7">S&aacute;bado</option>
+                </select>
+            </div>
+            <!-- Inicio datos vendedor -->
+            <div data-theme="a" data-role="fieldcontain" id="usernameContent">
+                <label for="usernameTextBox">
+                    Usuario
+                </label>
+                <input id="usernameTextBox" type="text" style="font-size: large;" />
+            </div>
+            <div data-theme="a" data-role="fieldcontain" id="claveContent">
+                <label for="claveTextBox">
+                    Clave
+                </label>
+                <input id="claveTextBox" type="password" style="font-size: large;" />
+            </div>
+            <!-- Fin datos vendedor -->
+            <!-- Inicio direccion del servidor -->
+            <div data-theme="a" data-role="fieldcontain" id="direccionServidorContent"></div>
+            <!-- Fin direccion del servidor -->
+            <ul data-theme="a" data-role="listview" data-inset="true">
+                <li style='white-space: normal'>
+                    <a id="syncButton" href="#"
+                       style='white-space: normal'>
+                        <img src="Content/images/sincronizacion-icono-4348-128.png" alt="Sync" />
+                        <h1>Sync</h1>
+                        <p>
+                            Confirme Enviar y Recibir datos
+                        </p>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!-- Pagina Sincronizando -->
+    <div data-theme="a" data-role="dialog" id="sincronizandoPage">
+        <div data-theme="a" data-role="content">
+            <h1 id="SyncPmain">
+                <img src="Content/images/ajax-loader.gif" width="24px" /> Sincronizando
+            </h1>
+            <p id="syncP"></p>
+            <ul id="ulSync" data-role="listview" data-inset="true"></ul>
+        </div>
+    </div>
+    <!-- Pagina Opciones -->
+    <div data-theme="a" data-role="page" id="opcionesPage" data-title="Opciones">
+        <div data-theme="a" data-role="header" id="headerOpciones">
+            <h1>Opciones</h1>
+            <a href="#homePage" data-icon="home">Inicio</a>
+        </div>
+        <div data-theme="a" data-role="content" id="opcionesContent">
+            <ul data-theme="a" data-role="listview" data-inset="true" data-split-icon='gear'>
+                <li style='white-space: normal'>
+                    <a href="#borrarPedidosPage" style='white-space: normal'>
+                        <img src="Content/images/borrarpedidos.png" style="height: 128px; width: 128px"
+                             alt="borra pedidos" />
+                        <h3>Borrar Pedidos</h3>
+                        <p>
+                            Elimina los pedidos del dispositivo
+                        </p>
+                    </a>
+                </li>
+                <li style='white-space: normal'>
+                    <a href="#infoPedidosPage" style='white-space: normal'>
+                        <img src="Content/images/infopedidos.png" style="height: 128px; width: 128px"
+                             alt="info" />
+                        <h3>Info Pedidos</h3>
+                        <p>
+                            Datos de los pedidos actuales
+                        </p>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!-- Pagina Borrar Pedidos -->
+    <div data-theme="a" data-role="page" id="borrarPedidosPage" data-title="Borrar Pedidos">
+        <div data-theme="a" data-role="header" id="Div3">
+            <h1>Borrar Pedidos</h1>
+            <a href="#homePage" data-icon="home">Inicio</a>
+        </div>
+        <div data-theme="a" data-role="content" id="Div4">
+            <p>
+                Esta opción borra en forma definitiva e irreversible los pedidos que hay almacenados en el dispositivo. Presione cancelar si NO desea que esto suceda.
+            </p>
+            <a data-role='button' href="#homePage" data-inline='true' data-icon='home'>Inicio</a>
+            <a data-role='button' href="#opcionesPage" data-inline='true' data-icon='back'>Atrás</a>
+            <a data-role='button' href="#" onclick="preventamobile.dal().borrarPedidos();" id="btnborrar" data-inline='true' data-icon='delete'>Borrar Pedidos</a>
+        </div>
+    </div>
+    <!-- Pagina Opciones Sincronizacion -->
+    <div data-theme="a" data-role="page" id="opcionesSyncPage" data-title="Opciones Sync">
+        <div data-theme="a" data-role="header" id="Div5">
+            <h1>Opciones Sync</h1>
+            <a href="#homePage" data-icon="home">Inicio</a>
+        </div>
+        <div data-theme="a" data-role="content" id="Div6">
+            <ul data-theme="a" data-role="listview" data-inset="true" data-split-icon='gear'>
+                <li style='white-space: normal'>
+                    <a href="#" style='white-space: normal' onclick="preventamobile.ui.sync().tipoSync(1);">
+                        <img src="Content/images/upload.png" style="height: 128px; width: 128px"
+                             alt="borra pedidos" />
+                        <h3>Sync Clientes/Precios</h3>
+                        <p>
+                            Carga en el dispositivo los Clientes y Precios.
+                        </p>
+                    </a>
+                </li>
+                <li style='white-space: normal'>
+                    <a href="#" style='white-space: normal' onclick="preventamobile.ui.sync().tipoSync(2);">
+                        <img src="Content/images/download.png" style="height: 128px; width: 128px"
+                             alt="info" />
+                        <h3>Sync Pedidos</h3>
+                        <p>
+                            Descarga en el servidor los pedidos
+                        </p>
+                    </a>
+                </li>
+                <!--
+                <li style='white-space: normal'><a href="#" style='white-space: normal' onclick="preventamobile.ui.sync().tipoSync(3);">
+                    <img src="Content/images/sincronizacion-icono-4348-128.png" style="height: 128px; width: 128px"
+                         alt="info"/>
+                    <h3>Sync TOTAL</h3>
+                    <p>
+                        Recibe Clientes y Descarga en el servidor los pedidos
+                    </p>
+                </a></li>
+                -->
+            </ul>
+        </div>
+    </div>
+    <!--#endregion-->
+    <!--#region Paginas varias de soporte-->
+    <!-- Dialogo general -->
+    <div data-theme="a" data-role="dialog" id="dialogPage">
+        <div id="contentDialog" data-theme="a" data-role="content">
+            <div id="messageContent">
+            </div>
+            <a data-role='button' id="dialogBackContinuarButton" data-rel='back' data-inline='true' data-icon='back'>Continuar</a>
+        </div>
+    </div>
+    <!-- Dialogo general con callback -->
+    <div data-theme="a" data-role="dialog" id="dialogCallbackPage">
+        <div id="contentCallbackDialog" data-theme="a" data-role="content">
+            <div id="messageCallbackContent">
+            </div>
+            <a data-role='button' id="dialogCallbackContinuarButton" data-inline='true' data-icon='back'>Continuar</a>
+        </div>
+    </div>
+    <!--#endregion-->
+</body>
+</html>

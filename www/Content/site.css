@@ -1,0 +1,109 @@
+/* creo con ccs una grilla 70/30 para las variedades */
+.ui-block-x, .ui-block-y {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    float: left;
+    min-height: 1px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.ui-grid-a .ui-block-x {
+    width: 69.95%;
+}
+
+.ui-grid-a .ui-block-x {
+    clear: left;
+}
+
+.ui-grid-a .ui-block-y {
+    width: 29.95%;
+}
+
+.ui-block-6, .ui-block-4 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    float: left;
+    min-height: 1px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.ui-grid-a .ui-block-6 {
+    width: 59.95%;
+}
+
+.ui-grid-a .ui-block-6 {
+    clear: left;
+}
+
+.ui-grid-a .ui-block-4 {
+    width: 39.95%;
+}
+
+.ui-block-37a, .ui-block-37b {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    float: left;
+    min-height: 1px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.ui-grid-a .ui-block-37a {
+    width: 29.95%;
+}
+
+.ui-grid-a .ui-block-37a {
+    clear: left;
+}
+
+.ui-grid-a .ui-block-37b {
+    width: 69.95%;
+}
+
+div.ui-slider {
+    width: 80%;
+}
+
+.ui-block-8, .ui-block-2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    float: left;
+    min-height: 1px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.ui-grid-a .ui-block-8 {
+    width: 79.95%;
+}
+
+.ui-grid-a .ui-block-8 {
+    clear: left;
+}
+
+.ui-grid-a .ui-block-2 {
+    width: 19.95%;
+}
+
+/* Disable certain interactions on touch devices */
+body {
+    -webkit-touch-callout: none;
+    -webkit-text-size-adjust: none;
+    -webkit-user-select: none;
+    -webkit-highlight: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
